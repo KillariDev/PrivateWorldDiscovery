@@ -1,6 +1,6 @@
 # Creating Private Worlds in Public Spaces: Private Set Intersection and Blockchain
 
-![image](https://hackmd.io/_uploads/H1sC6QLfke.png)
+![pm](pm.png)
 
 When exploring the real world, new discoveries are initially known only to the person who finds them. These findings are shared with others only if they independently discover the same thing or if the original explorer chooses to reveal the information.
 
@@ -8,20 +8,24 @@ In contrast, a blockchain operates as a public ledger, where all information is 
 
 ## Designing the World
 Imagine a 2D grid of rooms forming the foundation of our world. Each room may have doors connecting it to adjacent rooms in the four cardinal directions:
-![image](https://hackmd.io/_uploads/S139iJHz1g.png)
+
+![image1](image1.png)
 
 Explorers navigate this world by moving a character through these rooms, entering new areas through doors. Initially, the world is completely unknown — no one knows which rooms are connected or even if all rooms are accessible. Importantly, the rooms are not pre-generated; instead, they come into existence only when an explorer discovers them. This ensures that no individual can design or pre-know the structure of the world, paralleling the way the real world lacks a single "builder" who knows everything about it.
 
 ## The Process of Exploration
 
 Let’s consider two explorers who have just entered the world:
-![image](https://hackmd.io/_uploads/B1T4MeBGkg.png)
+
+![image2](image2.png)
+
 Either of our explorers know what are in their own rooms, but they or nobody else knows about what is in the other rooms.
 
 Each explorer knows only the details of the room they occupy. Beyond their current location, neither they nor anyone else knows what lies in the adjacent rooms.
 
 Now, suppose the green explorer ventures into an adjacent unexplored room. As they enter, the new room is generated dynamically:
-![image](https://hackmd.io/_uploads/S1dLflHzJl.png)
+
+![image3](image3.png)
 
 ### Room Generation Mechanics
 When a new room is generated, its features — such as which doors are open or closed—are determined randomly. For instance, in the image above, the random process created a room with one open door leading upwards, while the door to the left corresponds to the explorer's entry point.
@@ -48,7 +52,7 @@ This cryptographic process ensures that the explorer cannot retroactively alter 
 #### Problem: Room Dependencies
 When the red explorer moves left next to the green explorer, they must generate a new room. However, this new room depends on the state of the already-generated room below. For example, if the lower room has an upward door, the new room must have a downward door.
 
-![image](https://hackmd.io/_uploads/rJmPNerGyx.png)
+![image4](image4.png)
 
 While the red explorer knows the room below exists (public information), they lack details about its door configuration. This information is private to the green explorer.
 
