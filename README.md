@@ -9,6 +9,8 @@ In contrast, a blockchain operates as a public ledger, where all information is 
 ## Summary
 This article explores how a private world can be created within a public space using blockchain and cryptographic techniques. The world remains hidden to **everyone** except those actively exploring it. Explorers navigate a dynamically generated 2D grid of rooms, where each room’s details are only revealed when discovered. Cryptographic commitments and Zero-Knowledge Proofs (ZKPs) ensure privacy, and explorers can query each other for information using Private Set Intersection (PSI), without exposing which rooms are being asked about. 
 
+![map](map.jpg)
+
 ## Designing the World
 Imagine a 2D grid of rooms forming the foundation of our world. Each room may have doors connecting it to adjacent rooms in the four cardinal directions:
 
