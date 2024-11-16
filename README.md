@@ -18,7 +18,7 @@ Either of our explorers know what are in their own rooms, but they or nobody els
 Now, the green explorer decides to enter the door and enter a new unexplored room. As the explorer enters the room, it's generated
 ![image](https://hackmd.io/_uploads/S1dLflHzJl.png)
 
-## Generating a new room
+### Generating a new room
 To generate room, we randomize the four doors of the room. The doors can be closed or open. In the image above, the random generator has generated only one door up. We also know that there's a door towards the direction we came from (left).
 
 To generate room we need to have an access to random oracle that gives us a random number. There's many options on what the oracle could be, but that is not important, let's just imagine we have an access to an oracle that provides us with a random number and we can trust it to be a number that was not known by anyone prior we get it. This number can be public for everyone.
@@ -36,7 +36,7 @@ room_hash[x,y] = hash(room_seed[x,y])
 
 One interesting fault scenario here is that the explorer can manipulate the results here by refusing to calculate this if the result is not preferrable for them. To combat this attack vector, the explorer of the world need to be punished by some means (eg, by killing their character, or slashing their monetary stake). The fault here is provable, so it's easy to punish the explorer trustlessly.
 
-## Generating a room next to an already generated room
+### Generating a room next to an already generated room
 Now it's the red explorers turn to move. The red explorer moves left next to the green explorer:
 ![image](https://hackmd.io/_uploads/rJmPNerGyx.png)
 The red explorer generates the room the same way as before, but we now face a challenge; The room below is generated, which has an impact on the room being generated above, as if the room below has a door upwards, the room above also has to have door downwards. As a red explorer, we do not know what exists in the room below, we just know it has been generated, as that is public information.
@@ -55,28 +55,37 @@ decrypt(message) != (room_hash[x,y], proof)
 
 The red explorer can then generate the room as before and set door between the rooms open using the green explorers information.
 
-## Two additional edge cases
+#### Two additional edge cases
 There's also two other scenarios that can happen when an explorer moves to a room:
 1) The room can already be fully generated, so we need to get the whole room generating seed. This is easy as the other explorer can just share `room_seed[x,y]` directly, this will also allow the new explorer the power to generate new proofs from this location to the other explorers.
 2) More than one nearby rooms can be already generated, in this situation we need to request information from explorers that have visited the nearby rooms using the same protocol.
 
-# Hidden movement
+## Hidden movement
 Our current world leaks information about the other explorers. Everyone know at all times where the other explorers are. This is not how real explorable world works.
 
 We need to do a big overhaul on the protocol to be able to hide the explorers from each other, while at the same time have the exploring mechanics. We need a way for exploers to move privately in the world and then a way for players to share appropriate information about the world when needed. There's a blog post [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt) that explains nicely on how you can make a game with private movement, so we do not go in detail on how that can be accomplished. However, we'll explain more in detail on how to accomplish the hidden world. 
 
 Flynn discusses a hidden world idea in their blogpost, but the proposed world requires a world creator, a trusted party that creates the world and shares it with the other users. We want to have a world that is not known by anyone, and only known by explorers and those they like to share this information with.
 
-As the explorers are now moving in the world in a hidden manner, when a new room is being explored, we have no information if this room exists already
+As the explorers are now moving in the world in a hidden manner, when a new room is being explored, we have no information if this room exists already, or which explorer might know some information abut it. In order to acquire this information, we need a way to query the other explorers on if they have been in that room or nearby it. The other explorers then need to be able to reply this query and prove that their information about it is correct, while at the same not leak any additional information.
 
-When explorer explores a new room they need to ask ALL the explorers if they have been in that square or nearby squares. The other explorers need to be able to prove the claims, and also do all the communication without revealing information on that they have been in the room to anyone, as this would leak information.
+An interesting challenge arises from this, the explorer need to query information about their room, without telling the other explorers on what the room is in question. The other exploers also need to reply to this, without leaking anything extra.
 
 We have to come up with completely different way to tackle this situation and we cannot really use any other logic discussed previously.
 
-## Private Set Intersection
-This can be accomplished with Private Set Intersection (PSI) protocols. PSI allows two users to compare two sets to each other and share the outcome only between either of the explorers, eg. explorer 1 could have information set $[A,B,C,D]$ and the explorer 2 $[C,D,E]$, and 
+Problem description:
+> - We have an user A that wants to know information about one specific room
+> - We have user group B with information about the rooms
+> - The user A wants to query the group B about the information about one room, without sharing any information on what the room is in question
+> - The user group B only want to share information about the one particular unknown room, and nothing about the others
 
-## Pathway data structure
+### Private Set Intersection
+Our problem description fits a known problem: [Private Set Intersection (PSI)](https://en.wikipedia.org/wiki/Private_set_intersection).
+PSI allows two users to compare two sets of data with each other and share the outcome only between either of the explorers, eg. explorer 1 could query information about room A: $set_1 = [A]$. The explorer 2 knows information about rooms: $set_2 = [A, C,D,E]$. The explorers can conduct a private set intersection to be able to make explorer 1 know about the room A, without telling the explorer 2 which room they queried for.
+
+There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game. The game by [kilyig](https://github.com/kilyig) implements cryptographical Fog of War (FoW) with DH-PSI protocol. Our problem is very similar to the Fog of War problem, but not exactly the same, as in our world the world itself is under the Fog of War, not only the players.
+
+To start implementing the FoG of war to the world
 The sets users need to compare are not only cordinates, but square+door combinations: $X$, $Y$, $doorUp$, $doorRight$, $doorDown$, $doorLeft$. Nearby rooms also share information between them, as if there's a room on right with a door on left, then the room on left must have door to the right. This means that you can uniquily represent a pathway with only variables: $X$, $Y$, $doorUp$, $doorRight$, no need to have variables $doorDown$, $doorLeft$ as these are stored in the nearby room already.
 
 ## Applying PSI
@@ -150,5 +159,6 @@ https://0xparc.org/blog/zk-hunt
 - explorers can refuse to share information and there needs to be some kind of method to punish explorers for behaving badly, and a way to recover from these situations. One such way is that the explorer refusing to cooperate will just get killed and they lose the character, after this they are booted of the game.
 - Can we make it so that you don't know who has been in the location before?
 - one world builder that knows the world
+- write about meeting other players in the world if the players enter the same location (zhero tag)
 
 
