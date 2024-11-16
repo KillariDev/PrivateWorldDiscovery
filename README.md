@@ -150,7 +150,7 @@ To reduce the amount of data exchanged, we can eliminate redundancy in door stat
 
 - If a room on the right has a left door, the room on the left must have a corresponding right door.
 
-Thus, a room can be uniquely represented using only the following variables: $X$, $Y$, $doorUp$, $doorLeft$, no need to have variables $doorDown$, $doorRight$ as these are stored in the nearby room already. This means we can modify our query to be:
+Thus, a room can be uniquely represented using only the following variables: $X$, $Y$, $doorUp$, $doorLeft$, no need to have variables $doorDown$, $doorRight$ as these are stored in the nearby rooms already. This means we can modify our query to be:
 ```
 1) x = 5, y = 5, doorUp = open
 2) x = 5, y = 5, doorUp = closed
@@ -233,6 +233,8 @@ I believe there's a protocol that can accomplish this, but I wasn't able to come
 
 #### Game Design Implications
 If it is impossible to create such a protocol, the mechanic can still be integrated into the game design. For instance, footprints or residual traces could indicate the presence of other explorers without revealing their identities. This feature could enhance the narrative while introducing strategic gameplay elements, such as tracking others' movements or identifying unexplored areas.
+
+<img src="footprints.jpeg" width="200">
 
 ## 5) Explanding the World and Rules
 1) **Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
