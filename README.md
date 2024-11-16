@@ -79,6 +79,14 @@ It's an interesting question that if it's possible to make it so that when playe
 
 The challenge here is that some people can know what the room should look like, while other players do not know. So somehow we need to figure out which of the players know the result of the room and who do not, while at the same not actually know if any one the players know this information.
 
+The problem statement for this protocol is as follows:
+> There's multiple people with real information about a variable
+> There's multiple people with no information about a variable
+> -> How to combine this information in a way that I can get the value of the variable if it exists, and garbage otherwise?
+
+I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic. For example, storywise, you could explain that you can see the footprints of other players on the ground. You cannot still see whose footprints they are, but you can see how many players have been there, this can be a tracing game mechanic, you can see how many players have been there and that might tell that other players are near. You can also use this as a way to trace other players, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other player in them. Everytime you move to a square not explored by other players, you know are the first one to find this place.
+
+### Communication protocol
 
 ### which PSI protocol to use
 - the PSI protcol needs to work in a such way that players cannot cheat, or if they can cheat, that is detectable and punishable
