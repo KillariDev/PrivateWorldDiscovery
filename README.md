@@ -1,4 +1,7 @@
-# Private world discovery
+# Creating Private Worlds in Public Spaces: Private Set Intersection and Blockchain
+
+![image](https://hackmd.io/_uploads/H1sC6QLfke.png)
+
 When exploring the real world, new discoveries are initially known only to the person who finds them. These findings are shared with others only if they independently discover the same thing or if the original explorer chooses to reveal the information.
 
 In contrast, a blockchain operates as a public ledger, where all information is inherently transparent and accessible to everyone. While this transparency is advantageous for trust and security, it conflicts with the concept of a private, explorable world. However, cryptography allows us to address this challenge by hiding information even on a public ledger. With cryptographic techniques, we can create a virtual world that remains consistent for all users but is only revealed to those who explore it or receive shared knowledge from other explorers.
