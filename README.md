@@ -1,6 +1,6 @@
 # Creating Private, Discoverable Worlds in Public Spaces using Zero Knowledge Cryptography
 
-![ph](ph.jpeg)
+<img src = "ph.jpeg" width = "600">
 
 When exploring the real world, new discoveries are initially known only to the person who finds them. These findings are shared with others only if they independently discover the same thing or if the original explorer chooses to reveal the information.
 
@@ -14,7 +14,7 @@ This article explores how a private world can be created within a public space u
 ## 2) Designing the World
 Imagine a 2D grid of rooms forming the foundation of our world. Each room may have doors connecting it to adjacent rooms in the four cardinal directions:
 
-![image1](image1.png)
+<img src = "image1.png" width = "400">
 
 Explorers navigate this world by moving a character through these rooms, entering new areas through doors. Initially, the world is completely unknown — no one knows which rooms are connected or even if all rooms are accessible. Importantly, the rooms are not pre-generated; instead, they come into existence only when an explorer discovers them. This ensures that no individual can design or pre-know the structure of the world, paralleling the way the real world lacks a single "builder" who knows everything about it.
 
@@ -22,7 +22,7 @@ Explorers navigate this world by moving a character through these rooms, enterin
 
 Let’s consider two explorers who have just entered the world:
 
-![image2](image2.png)
+<img src = "image2.png" width = "400">
 
 Each explorer is only aware of the details of the room they are currently in. They know the directions of the doors within their room, but they have no knowledge of what lies in adjacent rooms — whether those rooms belong to other explorers or are uncharted. Similarly, other explorers or outside observers cannot see any rooms.
 
@@ -30,7 +30,7 @@ Each explorer is only aware of the details of the room they are currently in. Th
 
 Now, imagine the green explorer decides to venture into an adjacent, unexplored room. As they enter, the new room is dynamically generated:
 
-![image3](image3.png)
+<img src = "image3.png" width = "400">
 
 When a new room is generated, its features — such as which doors are open or closed—are determined randomly. For instance, in the image above, the random process created a room with one open door leading upwards, while the door to the left corresponds to the explorer's entry point.
 
@@ -58,7 +58,7 @@ This cryptographic process ensures that the explorer cannot retroactively alter 
 #### Problem: Room Dependencies
 When the red explorer moves left next to the green explorer, they must generate a new room. However, this new room depends on the state of the already-generated room below. For example, if the lower room has an upward door, the new room must have a downward door.
 
-![image4](image4.png)
+<img src = "image4.png" width = "400">
 
 While the red explorer knows the room below exists (public information), they lack details about its door configuration. This information is private to the green explorer.
 
@@ -255,6 +255,6 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 
 4) **Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
 
-![map](map.jpg)
+<img src = "map.jpeg" width = "600">
 
 Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
