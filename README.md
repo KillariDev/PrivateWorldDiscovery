@@ -24,9 +24,7 @@ Let’s consider two explorers who have just entered the world:
 
 ![image2](image2.png)
 
-Each explorer is aware of the directions of the doors in their current room, but they have no knowledge of what lies beyond them.
-
-An explorer only knows the details of the room they are in; beyond that, neither they nor anyone else can see what exists in the adjacent rooms.
+Each explorer is only aware of the details of the room they are currently in. They know the directions of the doors within their room, but they have no knowledge of what lies in adjacent rooms—whether those rooms belong to other explorers or are uncharted. Similarly, other explorers or outside observers cannot see any rooms.
 
 Now, imagine the green explorer decides to venture into an adjacent, unexplored room. As they enter, the new room is dynamically generated:
 
