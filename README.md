@@ -26,89 +26,85 @@ To generate room we need to have an access to random oracle that gives us a rand
 Now, as this random number is public for everyone, we cannot use it directly to generate the room, but we need to modify it in a way that the random number we use to generate the room is only known by the initial explorer. This can be achieved simply by hashing it with users private key:
 
 ```
-room_x_y_seed = hash(publicRandom, privateKey)
+room_seed[x,y] = hash(publicRandom, privateKey)
 ```
 
-This seed is then used to calculate on which directions this room has doors for. We also need to mark this room as being generated (green in the image). This means no player will generate this room again. The player commits the hash of the seed to chain, in order not to be able to change it:
+This seed is then used to calculate on which directions this room has doors for. We also need to mark this room as being generated (green in the image). This means no explorer will generate this room again. The explorer commits the hash of the seed to chain, in order not to be able to change it:
 ```
-room_hash_x_y = hash(room_x_y_seed)
+room_hash[x,y] = hash(room_seed[x,y])
 ```
 
 One interesting fault scenario here is that the explorer can manipulate the results here by refusing to calculate this if the result is not preferrable for them. To combat this attack vector, the explorer of the world need to be punished by some means (eg, by killing their character, or slashing their monetary stake). The fault here is provable, so it's easy to punish the explorer trustlessly.
 
 ## Generating a room next to an already generated room
-Now it's the red explorers turn to move. The red player moves left next to the green player:
+Now it's the red explorers turn to move. The red explorer moves left next to the green explorer:
 ![image](https://hackmd.io/_uploads/rJmPNerGyx.png)
-The red player generates the room the same way as before, but we now face a challenge; The room below is generated, which has an impact on the room generated above, as if the room below has a door upwards, the room above also has to have door upwards. As a red player, we do not know what exists in the room below, we just know it has been generated.
+The red explorer generates the room the same way as before, but we now face a challenge; The room below is generated, which has an impact on the room being generated above, as if the room below has a door upwards, the room above also has to have door downwards. As a red explorer, we do not know what exists in the room below, we just know it has been generated, as that is public information.
 
-The information about the below room is only known by the green player, so in order to generate the new room, we need to request information from green player. The red player only needs to know if there's a door between the rooms. In order to provide this information in trustless way to the red player, the green needs to tell the player the value `has_door_upwards_x_y` that tells if there's a door between the rooms, and a respective zero knowledge proof that proves from `room_hash_x_y` that:
+The state of the doors about the room below is only known by the green explorer, so in order to generate the new room, we need to request this information from them. The red only needs and should get to know if there's a door between the rooms, nothing more. In order to exchange this information between the explorers, green needs to communicate red the variable $hasDoorUpwards[x,y]$ that tells if there's a door between the rooms, and a respective zero knowledge proof that proves from the public input $roomHash[x,y]$ that:
 ```circuit
-room_hash_x_y = hash(room_x_y_seed) and
-hasDoorUpwards(room_x_y_seed) = has_door_upwards_x_y
+roomHash[x,y] = hash(roomSeed[x,y]) and
+hasDoorUpwards(roomSeed[x,y]) = has_door_upwards[x,y]
 ```
-The green player shares this information onchain encrypted with red players public key (to prevent anyone else knowing the information). Sharing this information could happen outside chain in the happy case. However, if green player refuses to share the information the red player needs to able to slash green player on the bad behaviour.
+The green explorer shares this information onchain encrypted with red explorers public key (to prevent anyone else knowing the information). Sharing this information could happen outside chain in the happy case. However, if green explorer refuses to share the information the red explorer needs to able to slash green explorer on the bad behaviour.
 
-The red player can then generate the room as before and set door between the rooms open using the green players information.
-
-### Defening against malicious player
-
-The green player can act maliciously here: They can refuse this information, or provide garbage infomation. To counter this, the game needs to have a mechanic that if this information is withdrawn, the malicious player is punished. Its easy to prove on chain if the player is withdrawing information, so the malicious player can be punished accordingly. 
-
-An another attack is to publish garbage information. If the red player cannot decrypt the information, they can generate a proof that when the message is decrypted, it does not result into information about the door and proof about it:
+An another attack vector here is to publish garbage information. If the red explorer cannot decrypt the information, they can generate a proof that when the message is decrypted, it does not result into information about the door and proof about it:
 ```circuit
-decrypt(message) != (room_hash_x_y, proof)
+decrypt(message) != (room_hash[x,y], proof)
 ```
-And again the misbehaving player can be punished provably.
+
+The red explorer can then generate the room as before and set door between the rooms open using the green explorers information.
 
 ## Two additional edge cases
-There's also two other scenarios that can happen when a player moves to a room:
-1) The room can already be fully generated, so we need to get the whole hash. This is easy as the other player can just share `room_x_y_seed` directly, this will also allow the new player the power to generate new proofs from this location to the other players
-2) More than one nearby rooms can be already generated, in this situation we need to request information from players that have visited the nearby rooms using the same protocol.
+There's also two other scenarios that can happen when an explorer moves to a room:
+1) The room can already be fully generated, so we need to get the whole room generating seed. This is easy as the other explorer can just share `room_seed[x,y]` directly, this will also allow the new explorer the power to generate new proofs from this location to the other explorers.
+2) More than one nearby rooms can be already generated, in this situation we need to request information from explorers that have visited the nearby rooms using the same protocol.
 
-## Hidden movement
-The previously explained game works as we know which rooms have already been discovered, and who do we need to ask for information. If we want to hide the players location while the explore the world, we cannot do any of this.
+# Hidden movement
+Our current world leaks information about the other explorers. Everyone know 
+The previously explained game works as we know which rooms have already been discovered, and who do we need to ask for information. If we want to hide the explorers location while the explore the world, we cannot do any of this.
 
-However, there's a way to accomplish this. When player explores a new room they need to ask ALL the players if they have been in that square or nearby squares. The other players need to be able to prove the claims, and also do all the communication without revealing information on that they have been in the room to anyone, as this would leak information.
+However, there's a way to accomplish this. When explorer explores a new room they need to ask ALL the explorers if they have been in that square or nearby squares. The other explorers need to be able to prove the claims, and also do all the communication without revealing information on that they have been in the room to anyone, as this would leak information.
 
 We have to come up with completely different way to tackle this situation and we cannot really use any other logic discussed previously.
 
 ## Private Set Intersection
-This can be accomplished with Private Set Intersection (PSI) protocols. PSI allows two users to compare two sets to each other and share the outcome only between either of the players, eg. player 1 could have information set $[A,B,C,D]$ and the player 2 $[C,D,E]$, and 
+This can be accomplished with Private Set Intersection (PSI) protocols. PSI allows two users to compare two sets to each other and share the outcome only between either of the explorers, eg. explorer 1 could have information set $[A,B,C,D]$ and the explorer 2 $[C,D,E]$, and 
 
 ## Pathway data structure
 The sets users need to compare are not only cordinates, but square+door combinations: $X$, $Y$, $doorUp$, $doorRight$, $doorDown$, $doorLeft$. Nearby rooms also share information between them, as if there's a room on right with a door on left, then the room on left must have door to the right. This means that you can uniquily represent a pathway with only variables: $X$, $Y$, $doorUp$, $doorRight$, no need to have variables $doorDown$, $doorLeft$ as these are stored in the nearby room already.
 
 ## Applying PSI
-When one player makes a hidden move in a way that other players do not know where they are moving, the player need to ask information about the room from other players, without revealing to the other players on which room they are and what information they are asking.
+When one explorer makes a hidden move in a way that other explorers do not know where they are moving, the explorer need to ask information about the room from other explorers, without revealing to the other explorers on which room they are and what information they are asking.
 
-This can be accomplished by the moving player by creating a PSI query with the room they are in, and the other players need to reply to this with the information of all the rooms they know about. The PSI allows us to achieve this in a private manner, however, as the moving player is individually communicating with each player, the moving player will know which of the players have been in that location before, and who haven't. The player also knows if anyone has been in the room before as well. In the current protocol this is a mandatory information, as if nobody has been in the room or its neighbours, the player generates a completely new room for it.
+This can be accomplished by the moving explorer by creating a PSI query with the room they are in, and the other explorers need to reply to this with the information of all the rooms they know about. The PSI allows us to achieve this in a private manner, however, as the moving explorer is individually communicating with each explorer, the moving explorer will know which of the explorers have been in that location before, and who haven't. The explorer also knows if anyone has been in the room before as well. In the current protocol this is a mandatory information, as if nobody has been in the room or its neighbours, the explorer generates a completely new room for it.
 
 ### hiding information on who has been in the location
-We can improve the mechanism by aggregating all the queries together, so that the player will no longer know where the data came from. When the moving player is querying for the information, all the other players need to communicate this information in a way, that its not revealed on who does the communication. This can be made using relay services, a player communicates their information to a relay service, and the relay service will then communicate this information to the querying player. The relay can be whoever, who can keep the secret on who communicated with them, but even this is not mandatory, as you could use a The Onion Router or similar protocol to communicate with relay. The PSI protocols also require back and fourth communication, so this communicating via relay needs to be done multiple times, which is not optimal.
+We can improve the mechanism by aggregating all the queries together, so that the explorer will no longer know where the data came from. When the moving explorer is querying for the information, all the other explorers need to communicate this information in a way, that its not revealed on who does the communication. This can be made using relay services, a explorer communicates their information to a relay service, and the relay service will then communicate this information to the querying explorer. The relay can be whoever, who can keep the secret on who communicated with them, but even this is not mandatory, as you could use a The Onion Router or similar protocol to communicate with relay. The PSI protocols also require back and fourth communication, so this communicating via relay needs to be done multiple times, which is not optimal.
 
-After the player gets all the information from all the players, the user will perform PSI protocol with them. The player will get the set of pathways that have been visited and if the doors to them are open or closed. The player will also know how many players have seen those doors, so our protocol is still leaking information.
+After the explorer gets all the information from all the explorers, the user will perform PSI protocol with them. The explorer will get the set of pathways that have been visited and if the doors to them are open or closed. The explorer will also know how many explorers have seen those doors, so our protocol is still leaking information.
 
-### Hiding information on number of players that have been in the location
-It's an interesting question that if it's possible to make it so that when players share information it would not actually be known if they have been in a location, but the room would be completely generated from the inputs of the other players. It would not matter if they have been in the room or not.
+### Hiding information on number of explorers that have been in the location
+It's an interesting question that if it's possible to make it so that when explorers share information it would not actually be known if they have been in a location, but the room would be completely generated from the inputs of the other explorers. It would not matter if they have been in the room or not.
 
-The challenge here is that some people can know what the room should look like, while other players do not know. So somehow we need to figure out which of the players know the result of the room and who do not, while at the same not actually know if any one the players know this information.
+The challenge here is that some people can know what the room should look like, while other explorers do not know. So somehow we need to figure out which of the explorers know the result of the room and who do not, while at the same not actually know if any one the explorers know this information.
 
 The problem statement for this protocol is as follows:
 > There's multiple people with real information about a variable
 > There's multiple people with no information about a variable
 > -> How to combine this information in a way that I can get the value of the variable if it exists, and garbage otherwise?
 
-I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic. For example, storywise, you could explain that you can see the footprints of other players on the ground. You cannot still see whose footprints they are, but you can see how many players have been there, this can be a tracing game mechanic, you can see how many players have been there and that might tell that other players are near. You can also use this as a way to trace other players, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other player in them. Everytime you move to a square not explored by other players, you know are the first one to find this place.
+I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic. For example, storywise, you could explain that you can see the footprints of other explorers on the ground. You cannot still see whose footprints they are, but you can see how many explorers have been there, this can be a tracing game mechanic, you can see how many explorers have been there and that might tell that other explorers are near. You can also use this as a way to trace other explorers, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other explorer in them. Everytime you move to a square not explored by other explorers, you know are the first one to find this place.
 
 ### Communication protocol
 
 ### which PSI protocol to use
-- the PSI protcol needs to work in a such way that players cannot cheat, or if they can cheat, that is detectable and punishable
+- the PSI protcol needs to work in a such way that explorers cannot cheat, or if they can cheat, that is detectable and punishable
 - This can be achieved by using most of the PSI protcols, and then applying a ZK proof that it was computed correctly.
 
-When one player moves, the other players need to communicate:
+When one explorer moves, the other explorers need to communicate:
 1) 
-player state:
+explorer state:
 ```
 current_position = (0,1)
 move_history = [(0,0), (0,1), (0,2), (0,1)]
@@ -144,9 +140,9 @@ https://0xparc.org/blog/zk-hunt
 - private set intersection
 
 # challenges & notes
-- all the players need to communicate with each other regularly, making the protocol $o(n^2)$ at best
-- The room history lists of the player continue to grow all the time as the game progresses. One way to reduce this is make the players forget the information over time, making the dungeon to also change when nobody remembers about it.
-- Players can refuse to share information and there needs to be some kind of method to punish players for behaving badly, and a way to recover from these situations. One such way is that the player refusing to cooperate will just get killed and they lose the character, after this they are booted of the game.
+- all the explorers need to communicate with each other regularly, making the protocol $o(n^2)$ at best
+- The room history lists of the explorer continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the dungeon to also change when nobody remembers about it.
+- explorers can refuse to share information and there needs to be some kind of method to punish explorers for behaving badly, and a way to recover from these situations. One such way is that the explorer refusing to cooperate will just get killed and they lose the character, after this they are booted of the game.
 - Can we make it so that you don't know who has been in the location before?
 - one world builder that knows the world
 
