@@ -110,12 +110,16 @@ For instance:
 2) Explorer 2 knows about multiple rooms, represented as $𝑠𝑒𝑡_2=[𝐴,𝐶,𝐷,𝐸]$
 3) Using PSI, Explorer 1 can learn that Room A is in Explorer 2's set, without disclosing to Explorer 2 which room was queried.
 
-There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game by [kilyig](https://github.com/kilyig). The game implements cryptographical Fog of War (FoW) with DH-PSI protocol. Kilyig also impements zero knowledge circuits for he DH-PSI protocol that are needed to ensure that the participants are cannot lie. DH-PSI works without them as well, but then the users need to be assumed to be honest.
+There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game by [kilyig](https://github.com/kilyig). ZheroTag implements cryptographical Fog of War (FoW) with DH-PSI protocol. It also incorporates zero-knowledge circuits to ensure participants cannot cheat.
 
-Our problem is very similar to the Fog of War problem, but not exactly the same, as in our world the world itself is under the Fog of War, not only the players. 
+While Diffie-Hellman-based PSI can function without zero-knowledge proofs, doing so requires assuming honest participants, which might not be practical in all scenarios.
+
+Although our problem is similar to the Fog of War scenario, there is a key difference: In our case, the world itself is obscured (Fog of War applies to the world structure), whereas in traditional FoW, only the players' movements and visibility are concealed.
 
 ### Using the PSI protocol
-In order to start performing Private Set Intersection, we need to find out what are the sets we need to be comparing. As a first thought you might think that we can compare the players current room cordinates to other player cordinates, but this is not correct. We need to compare the smallest information unit that we have, a pathway between the rooms. A room consists of 4 doors that are either open or closed. We also cannot first query for the doors, and then ask if they are open or closed, so we need to query all the possible combinations of the doors in the room at the same time. To query the completely state of a room ($x=5$, $y=5$), we need to query all the combinations:
+To effectively utilize the Private Set Intersection (PSI) protocol, we first need to determine the sets to compare. At first glance, it might seem logical to compare the coordinates of the current room with other explorers' known room coordinates, but this approach is insufficient. Instead, we need to compare the smallest unit of information available: pathways between rooms.
+
+A room consists of four doors, each of which can be open or closed. To maintain privacy and completeness, we cannot first query the existence of doors and then separately inquire about their states (open or closed). Therefore, we must query all possible combinations of door states in the room simultaneously. For example, to query the full state of a room at $(x = 5, y = 5)$ we would request the following:
 
 ```
 1) x = 5, y = 5, doorUp = open
@@ -128,32 +132,86 @@ In order to start performing Private Set Intersection, we need to find out what 
 8) x = 5, y = 5, doorRight = closed
 ```
 
-The other explorers need to send us information about all the doors of all the rooms they know about, which is 4 information points per room.
+Each explorer needs to respond with information about the states of the doors for all the rooms they know, providing up to four data points per room.
 
-We can perform some optimizations on this data amount. Nearby rooms have some information about the other nearby rooms, as if there's a room on right with a door on left, then the room on left must have door to the right. This means that you can uniquily represent a room with only variables: $X$, $Y$, $doorUp$, $doorRight$, no need to have variables $doorDown$, $doorLeft$ as these are stored in the nearby room already. This means we can modify our query to be:
+#### Optimizing Data Representation
+To reduce the amount of data exchanged, we can eliminate redundancy in door states. Adjacent rooms inherently contain information about each other's doors. For instance:
+
+- If a room on the right has a left door, the room on the left must have a corresponding right door.
+
+Thus, a room can be uniquely represented using only the following variables: $X$, $Y$, $doorUp$, $doorLeft$, no need to have variables $doorDown$, $doorRight$ as these are stored in the nearby room already. This means we can modify our query to be:
 ```
-1-4) as before
+1) x = 5, y = 5, doorUp = open
+2) x = 5, y = 5, doorUp = closed
+3) x = 5, y = 5, doorLeft = open
+4) x = 5, y = 5, doorLeft = closed
 5) x = 5, y = 6, doorUp = open
 6) x = 5, y = 6, doorUp = closed
 7) x = 6, y = 5, doorLeft = open
 8) x = 6, y = 5, doorLeft = closed
 ```
 
-And now the query repliers do not need to send data about the duplicate doors.
+With this optimized query structure, explorers only need to respond with unique door data, avoiding duplication.
 
-Now, when an explorer moves to a room, they query all the other explorers information about the room with PSI. This works, but still leaks some information that we would prefer to keep private; if a door match is found, they know that the explorer they are communicating with has been there, and if there's no match, they know they haven't been there before. The explorer also knows if they are first to discover the room before as well. In the current protocol this is a mandatory information, as if nobody has been in the room or its neighbours, the explorer generates a completely new room for it.
+#### Handling Information Privacy
+When an explorer moves to a new room, they query other explorers using PSI to gather information about the room's state. However, this process still reveals certain pieces of information that we might prefer to keep private:
+
+1) If a door match is found, the querying explorer learns that the responder has visited the room.
+2) If no match is found, the querying explorer deduces that the responder has not visited the room.
+3) The querying explorer also discovers whether they are the first to explore the room.
+
+In the current protocol, this leakage is unavoidable since discovering whether a room or its neighbors are unexplored is critical for generating new rooms.
 
 ### Hiding information on who has been in the location
-We can improve our PSI protocol by aggregating all the queries from all the explorers participating in a single query together, so that the explorer will no longer know where the data came from. We need to establish a communication protocol between the querier and the replier in a manner that the querier does not know on which explorer they are communicating with.
+We can enhance the PSI protocol by aggregating all queries and responses from participating explorers into a single, unified process. This ensures that the querying explorer cannot deduce which specific explorer provided the information. To achieve this, we need a communication protocol that obscures the identity of the responder while maintaining the integrity of the data exchange.
 
-This can be achieved using a relay services, an explorer communicates their information to a relay service, and the relay service will then communicate this information to the querier. The relay can be whoever, who can keep the secret on who communicated with them, but even this is not mandatory, as you could use a TOR or similar protocol to communicate with a relay. Now the querier do not know the explorer they are chatting with, but still some information is leaded as the PSI protocol is done via each set of at the same time.
+#### Using a Relay Service for Anonymity
+One way to implement this is by introducing a relay service. Explorers send their information to the relay, which then forwards it to the querier. The relay acts as a neutral intermediary, preventing the querier from knowing the identity of the responder. To further reinforce anonymity:
 
-This could be further improved by having the relay to collect the responses at once and then sending them at once to the querier, or we could also use some other network and over time send all the replies in a random order. However, this is quite complicated and error prone, especially as the information might get lost on the way. The PSI protocols also require multiple back and forth communications. Even if all this were to work fine, we still leak some information, as the querier gets information on how many explorers have already seen some door.
+- The relay service can be any trusted or semi-trusted party capable of keeping communication origins private.
+Alternatively, explorers can use anonymity-preserving protocols like - TOR to interact with the relay, minimizing trust requirements.
+This approach ensures that the querier only receives aggregated responses, eliminating direct links between responses and individual explorers.
 
-### Hiding information on the count of explorers that have been in the location
-It's an interesting question whether if it's possible to improve our protocol in a way that when explorers share information it would not actually be known if they have been in that location, but the room would be completely generated from the inputs of the other explorers. It would not matter if they have been in the room or not.
+#### Mitigating Timing and Order Leaks
+Despite using a relay service, timing or order of responses may still leak some information. For instance:
 
-The challenge here is that some people can know what the room should look like, while other explorers do not know. So somehow we need to figure out which of the explorers know the result of the room and who do not, while at the same not actually know if any one the explorers know this information.
+If responses arrive sequentially, the querier might deduce how many explorers participated or infer patterns based on response order.
+To address this:
+
+1) **Batching Responses**: The relay can aggregate all responses and send them to the querier in a single batch, masking individual participants.
+2) **Randomized Delivery**: The relay could distribute responses over time in a random order, further obscuring their origins.
+
+#### Challenges with Relay-Based Systems
+While these techniques enhance privacy, they introduce additional complexity and potential issues:
+
+1) **Reliability**: Messages could be lost or delayed, particularly with randomized delivery or over noisy networks.
+2) **Protocol Complexity**: PSI protocols typically require multiple back-and-forth exchanges, and adding a relay increases the overhead.
+
+#### Residual Information Leakage
+Even with these measures, some information leakage is unavoidable. For example:
+
+- The querier can infer how many explorers have encountered a particular door based on the number of matches found in the PSI results.
+
+Although this information leakage is minimal compared to direct interactions, further advancements in privacy-preserving techniques or alternative PSI protocols may be required to fully mitigate this issue.
+
+### Concealing the count of explorers traces
+Improving the protocol to fully obscure whether explorers have visited a location while still allowing the room to be deterministically generated from valid inputs presents a unique challenge. Specifically, some explorers may know the correct state of a room, while others may not. The task is to combine their inputs without revealing who possesses accurate information — or even whether any such information exists.
+
+#### Problem Statement
+The requirements for the protocol are as follows:
+
+- **Input Handling**: Some explorers possess correct information about the room's state, while others do not.
+- **Output Generation**: The protocol must:
+    1) Accurately generate the room if valid information exists.
+    2) Produce random a room if no valid information is provided.
+    3) Ensure the querier cannot determine whether the room is accurate or random.
+
+**Anonymity**: The protocol must not reveal which explorers, if any, contributed valid information.
+
+#### Challenges
+The primary difficulty lies in ensuring that the process is entirely anonymous. Explorers who know the correct state of a room must contribute their inputs in a way that cannot be distinguished from those who do not. This prevents the querier from inferring the presence or absence of knowledgeable explorers based on the result of the protocol.
+
+If a solution to this challenge exists, it could enable the room to be reliably generated without any information leakage about prior explorer activity. However, as of now, finding such a solution remains an open problem.
 
 The problem statement for this protocol is as follows:
 > - There's multiple people with real information about the variable
@@ -162,18 +220,25 @@ The problem statement for this protocol is as follows:
 
 I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic.
 
-For example, storywise, you could explain that you can see the footprints of other explorers on the ground. You cannot still see whose footprints they are, but you can see how many explorers have been there, this can be a tracing game mechanic, you can see how many explorers have been there and that might tell that other explorers are near. You can also use this as a way to trace other explorers, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other explorer in them. Everytime you move to a square not explored by other explorers, you know are the first one to find this place.
+#### Game Design Implications
+If it is impossible to create such a protocol, the mechanic can still be integrated into the game design. For instance, footprints or residual traces could indicate the presence of other explorers without revealing their identities. This feature could enhance the narrative while introducing strategic gameplay elements, such as tracking others' movements or identifying unexplored areas.
 
-## Explanding the world and rules
-- Currently the players can never see each other, but this is easy to change. When players communicate with each other, they can add their characters location to the communication as well. Location sharing works the same was as the doors.
-- The world does not need to be limited to be just doors. We can have additional variables that can indicate what is in the rooms. However, PSI protocol is already quite inefficient and adding more variables will make the protocol even more demanding
-- The world does not need to be limited to just rooms, we could have a hiearchical structure over the rooms in lower resolution. For example we could have biomes that consits of 4 rooms at once and we run a separate PSI protocol for the biome information. The biomes would then affect the generated rooms 
-- The explorers door history list continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the dungeon to also change when nobody remembers about it.
+## Explanding the World and Rules
+**Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
+
+**Enhanced Room Features**: The world can extend beyond just doors. Additional variables could represent unique room features or items. However, the PSI protocol is already computationally intensive, and adding more variables would further increase its complexity.
+
+**Hierarchical World Structure**: The world could include a hierarchical structure for broader exploration. For instance, biomes consisting of clusters of four rooms could be introduced. A separate PSI protocol could manage biome-level information, with biome attributes influencing the generation of individual rooms within them.
+
+**Dynamic Memory and World Evolution**: As the game progresses, explorers’ door histories grow continuously. To manage this, explorers could gradually forget old information, allowing the dungeon to evolve dynamically as forgotten areas change over time.
 
 ## Challenges
-- all the explorers need to communicate with each other regularly, its not possible to only communicate with blockchain. The PSI requires multiple rounds to communicate as well
-- The amount of data communicated with users is also significant, PSI is not particularly efficient protocol.
-- Making a world that would allow anyone to join at any time and explore as they like is not also really practical. All the explorers need to be online at the same time and be ready to communicate when other explorers make actions 
-- The room history lists of the explorers continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the world also change when it's being forgotten
+**Continuous Communication**: Explorers must communicate with each other regularly, as relying solely on blockchain is insufficient. Additionally, the PSI protocol requires multiple communication rounds, further increasing complexity.
+
+**Inefficiency of PSI**: PSI is not an efficient protocol, and the amount of data exchanged between users can be substantial, adding to resource demands.
+
+**Simultaneous Participation**: Creating a world where anyone can join and explore at any time is impractical. All explorers must be online simultaneously and ready to respond when others take actions, limiting flexibility.
+
+**Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
 
 Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
