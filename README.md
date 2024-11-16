@@ -138,17 +138,13 @@ I believe there's a protocol that can accomplish this, but I wasn't able to come
 For example, storywise, you could explain that you can see the footprints of other explorers on the ground. You cannot still see whose footprints they are, but you can see how many explorers have been there, this can be a tracing game mechanic, you can see how many explorers have been there and that might tell that other explorers are near. You can also use this as a way to trace other explorers, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other explorer in them. Everytime you move to a square not explored by other explorers, you know are the first one to find this place.
 
 ## Explanding the world and rules
-There's futher ideas on how you 
-The world does not need to be limited to be just rooms 
-
-https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s
+- Currently the players can never see each other, but this is easy to change. When players communicate with each other, they can add their characters location to the communication as well. Location sharing works the same was as the doors.
+- The world does not need to be limited to be just doors. We can have additional variables that can indicate what is in the rooms. However, PSI protocol is already quite inefficient and adding more variables will make the protocol even more demanding
+- The world does not need to be limited to just rooms, we could have a hiearchical structure over the rooms in lower resolution. For example we could have biomes that consits of 4 rooms at once and we run a separate PSI protocol for the biome information. The biomes would then affect the generated rooms 
+- The explorers door history list continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the dungeon to also change when nobody remembers about it.
 
 # challenges & notes
 - all the explorers need to communicate with each other regularly, making the protocol $o(n^2)$ at best
 - The room history lists of the explorer continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the dungeon to also change when nobody remembers about it.
-- explorers can refuse to share information and there needs to be some kind of method to punish explorers for behaving badly, and a way to recover from these situations. One such way is that the explorer refusing to cooperate will just get killed and they lose the character, after this they are booted of the game.
-- Can we make it so that you don't know who has been in the location before?
-- one world builder that knows the world
-- write about meeting other players in the world if the players enter the same location (zhero tag)
 
-
+Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
