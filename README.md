@@ -61,10 +61,15 @@ There's also two other scenarios that can happen when an explorer moves to a roo
 2) More than one nearby rooms can be already generated, in this situation we need to request information from explorers that have visited the nearby rooms using the same protocol.
 
 # Hidden movement
-Our current world leaks information about the other explorers. Everyone know 
-The previously explained game works as we know which rooms have already been discovered, and who do we need to ask for information. If we want to hide the explorers location while the explore the world, we cannot do any of this.
+Our current world leaks information about the other explorers. Everyone know at all times where the other explorers are. This is not how real explorable world works.
 
-However, there's a way to accomplish this. When explorer explores a new room they need to ask ALL the explorers if they have been in that square or nearby squares. The other explorers need to be able to prove the claims, and also do all the communication without revealing information on that they have been in the room to anyone, as this would leak information.
+We need to do a big overhaul on the protocol to be able to hide the explorers from each other, while at the same time have the exploring mechanics. We need a way for exploers to move privately in the world and then a way for players to share appropriate information about the world when needed. There's a blog post [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt) that explains nicely on how you can make a game with private movement, so we do not go in detail on how that can be accomplished. However, we'll explain more in detail on how to accomplish the hidden world. 
+
+Flynn discusses a hidden world idea in their blogpost, but the proposed world requires a world creator, a trusted party that creates the world and shares it with the other users. We want to have a world that is not known by anyone, and only known by explorers and those they like to share this information with.
+
+As the explorers are now moving in the world in a hidden manner, when a new room is being explored, we have no information if this room exists already
+
+When explorer explores a new room they need to ask ALL the explorers if they have been in that square or nearby squares. The other explorers need to be able to prove the claims, and also do all the communication without revealing information on that they have been in the room to anyone, as this would leak information.
 
 We have to come up with completely different way to tackle this situation and we cannot really use any other logic discussed previously.
 
