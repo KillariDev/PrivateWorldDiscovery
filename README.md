@@ -91,9 +91,9 @@ Currently, explorers' locations are fully visible, which is unrealistic. A new p
 
 We need a significant overhaul of the protocol to enable private movement for explorers while preserving the mechanics of world exploration. Explorers must be able to navigate the world without revealing their positions and share relevant information about the world only when necessary.
 
-A blog post, [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt), provides an excellent explanation of private movement in games. While we won’t delve into those details, we will focus on implementing a hidden world.
+A blog post, [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt) offers a great explanation of private movement in games. We’ll be implementing a similar system in our own world. While we won’t go into the specifics of the implementation, our focus will be on creating a hidden world.
 
-Flynn’s concept involves a trusted **world creator** who designs the world and shares it with players. However, we aim for a decentralized approach where the world is unknown to everyone except the explorers and those they choose to share information with.
+Flynn also introduces a concept of a hidden world involving a trusted **world creator** who designs the world and shares it with players. However, we aim for a decentralized approach where the world is hidden to **everyone except the explorers** and those they choose to share information with.
 
 When explorers move through the hidden world, a challenge arises when encountering new rooms. Explorers need to determine:
 
