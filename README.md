@@ -258,6 +258,6 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 
 4) **Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
 
-<img src = "map.jpeg" width = "600">
+<img src = "map.jpg" width = "600">
 
 Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
