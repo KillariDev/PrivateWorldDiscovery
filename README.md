@@ -174,6 +174,7 @@ When an explorer moves to a new room, they query other explorers using PSI to ga
 In the current protocol, this leakage is unavoidable since discovering whether a room or its neighbors are unexplored is critical for generating new rooms.
 
 ### Hiding information on who has been in the location
+<img src = "hiding.jpeg" width = "400">
 We can enhance the PSI protocol by aggregating all queries and responses from participating explorers into a single, unified process. This ensures that the querying explorer cannot deduce which specific explorer provided the information. To achieve this, we need a communication protocol that obscures the identity of the responder while maintaining the integrity of the data exchange.
 
 #### Using a Relay Service for Anonymity
@@ -232,9 +233,9 @@ The problem statement for this protocol is as follows:
 I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic.
 
 #### Game Design Implications
+<img src = "footprints.jpeg" width = "400">
 If it is impossible to create such a protocol, the mechanic can still be integrated into the game design. For instance, footprints or residual traces could indicate the presence of other explorers without revealing their identities. This feature could enhance the narrative while introducing strategic gameplay elements, such as tracking others' movements or identifying unexplored areas.
 
-<img src="footprints.jpeg" width="200">
 
 ## 5) Explanding the World and Rules
 1) **Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
