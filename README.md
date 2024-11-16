@@ -83,75 +83,65 @@ Problem description:
 Our problem description fits a known problem: [Private Set Intersection (PSI)](https://en.wikipedia.org/wiki/Private_set_intersection).
 PSI allows two users to compare two sets of data with each other and share the outcome only between either of the explorers, eg. explorer 1 could query information about room A: $set_1 = [A]$. The explorer 2 knows information about rooms: $set_2 = [A, C,D,E]$. The explorers can conduct a private set intersection to be able to make explorer 1 know about the room A, without telling the explorer 2 which room they queried for.
 
-There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game. The game by [kilyig](https://github.com/kilyig) implements cryptographical Fog of War (FoW) with DH-PSI protocol. Our problem is very similar to the Fog of War problem, but not exactly the same, as in our world the world itself is under the Fog of War, not only the players.
+There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game. The game by [kilyig](https://github.com/kilyig) implements cryptographical Fog of War (FoW) with DH-PSI protocol. Kilyig also impements zero knowledge circuits for he DH-PSI protocol that are needed to ensure that the participants are cannot lie. DH-PSI works without them as well, but then the users need to be assumed to be honest.
 
-To start implementing the FoG of war to the world
-The sets users need to compare are not only cordinates, but square+door combinations: $X$, $Y$, $doorUp$, $doorRight$, $doorDown$, $doorLeft$. Nearby rooms also share information between them, as if there's a room on right with a door on left, then the room on left must have door to the right. This means that you can uniquily represent a pathway with only variables: $X$, $Y$, $doorUp$, $doorRight$, no need to have variables $doorDown$, $doorLeft$ as these are stored in the nearby room already.
+Our problem is very similar to the Fog of War problem, but not exactly the same, as in our world the world itself is under the Fog of War, not only the players. 
 
-## Applying PSI
-When one explorer makes a hidden move in a way that other explorers do not know where they are moving, the explorer need to ask information about the room from other explorers, without revealing to the other explorers on which room they are and what information they are asking.
+### Using the PSI protocol
+In order to start performing Private Set Intersection, we need to find out what are the sets we need to be comparing. As a first thought you might think that we can compare the players current room cordinates to other player cordinates, but this is not correct. We need to compare the smallest information unit that we have, a pathway between the rooms. A room consists of 4 doors that are either open or closed. We also cannot first query for the doors, and then ask if they are open or closed, so we need to query all the possible combinations of the doors in the room at the same time. To query the completely state of a room ($x=5$, $y=5$), we need to query all the combinations:
 
-This can be accomplished by the moving explorer by creating a PSI query with the room they are in, and the other explorers need to reply to this with the information of all the rooms they know about. The PSI allows us to achieve this in a private manner, however, as the moving explorer is individually communicating with each explorer, the moving explorer will know which of the explorers have been in that location before, and who haven't. The explorer also knows if anyone has been in the room before as well. In the current protocol this is a mandatory information, as if nobody has been in the room or its neighbours, the explorer generates a completely new room for it.
+```
+1) x = 5, y = 5, doorUp = open
+2) x = 5, y = 5, doorUp = closed
+3) x = 5, y = 5, doorLeft = open
+4) x = 5, y = 5, doorLeft = closed
+5) x = 5, y = 5, doorDown = open
+6) x = 5, y = 5, doorDown = closed
+7) x = 5, y = 5, doorRight = open
+8) x = 5, y = 5, doorRight = closed
+```
 
-### hiding information on who has been in the location
-We can improve the mechanism by aggregating all the queries together, so that the explorer will no longer know where the data came from. When the moving explorer is querying for the information, all the other explorers need to communicate this information in a way, that its not revealed on who does the communication. This can be made using relay services, a explorer communicates their information to a relay service, and the relay service will then communicate this information to the querying explorer. The relay can be whoever, who can keep the secret on who communicated with them, but even this is not mandatory, as you could use a The Onion Router or similar protocol to communicate with relay. The PSI protocols also require back and fourth communication, so this communicating via relay needs to be done multiple times, which is not optimal.
+The other explorers need to send us information about all the doors of all the rooms they know about, which is 4 information points per room.
 
-After the explorer gets all the information from all the explorers, the user will perform PSI protocol with them. The explorer will get the set of pathways that have been visited and if the doors to them are open or closed. The explorer will also know how many explorers have seen those doors, so our protocol is still leaking information.
+We can perform some optimizations on this data amount. Nearby rooms have some information about the other nearby rooms, as if there's a room on right with a door on left, then the room on left must have door to the right. This means that you can uniquily represent a room with only variables: $X$, $Y$, $doorUp$, $doorRight$, no need to have variables $doorDown$, $doorLeft$ as these are stored in the nearby room already. This means we can modify our query to be:
+```
+1-4) as before
+5) x = 5, y = 6, doorUp = open
+6) x = 5, y = 6, doorUp = closed
+7) x = 6, y = 5, doorLeft = open
+8) x = 6, y = 5, doorLeft = closed
+```
 
-### Hiding information on number of explorers that have been in the location
-It's an interesting question that if it's possible to make it so that when explorers share information it would not actually be known if they have been in a location, but the room would be completely generated from the inputs of the other explorers. It would not matter if they have been in the room or not.
+And now the query repliers do not need to send data about the duplicate doors.
+
+Now, when an explorer moves to a room, they query all the other explorers information about the room with PSI. This works, but still leaks some information that we would prefer to keep private; if a door match is found, they know that the explorer they are communicating with has been there, and if there's no match, they know they haven't been there before. The explorer also knows if they are first to discover the room before as well. In the current protocol this is a mandatory information, as if nobody has been in the room or its neighbours, the explorer generates a completely new room for it.
+
+### Hiding information on who has been in the location
+We can improve our PSI protocol by aggregating all the queries from all the explorers participating in a single query together, so that the explorer will no longer know where the data came from. We need to establish a communication protocol between the querier and the replier in a manner that the querier does not know on which explorer they are communicating with.
+
+This can be achieved using a relay services, an explorer communicates their information to a relay service, and the relay service will then communicate this information to the querier. The relay can be whoever, who can keep the secret on who communicated with them, but even this is not mandatory, as you could use a TOR or similar protocol to communicate with a relay. Now the querier do not know the explorer they are chatting with, but still some information is leaded as the PSI protocol is done via each set of at the same time.
+
+This could be further improved by having the relay to collect the responses at once and then sending them at once to the querier, or we could also use some other network and over time send all the replies in a random order. However, this is quite complicated and error prone, especially as the information might get lost on the way. The PSI protocols also require multiple back and forth communications. Even if all this were to work fine, we still leak some information, as the querier gets information on how many explorers have already seen some door.
+
+### Hiding information on the count of explorers that have been in the location
+It's an interesting question whether if it's possible to improve our protocol in a way that when explorers share information it would not actually be known if they have been in that location, but the room would be completely generated from the inputs of the other explorers. It would not matter if they have been in the room or not.
 
 The challenge here is that some people can know what the room should look like, while other explorers do not know. So somehow we need to figure out which of the explorers know the result of the room and who do not, while at the same not actually know if any one the explorers know this information.
 
 The problem statement for this protocol is as follows:
-> There's multiple people with real information about a variable
-> There's multiple people with no information about a variable
-> -> How to combine this information in a way that I can get the value of the variable if it exists, and garbage otherwise?
+> - There's multiple people with real information about the variable
+> - There's multiple people with no information about the variable
+> - How to combine this information in a way that I can get the value of the variable if it exists, and garbage otherwise? And I do not know if I have gotten the right value, or just garbage.
 
-I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic. For example, storywise, you could explain that you can see the footprints of other explorers on the ground. You cannot still see whose footprints they are, but you can see how many explorers have been there, this can be a tracing game mechanic, you can see how many explorers have been there and that might tell that other explorers are near. You can also use this as a way to trace other explorers, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other explorer in them. Everytime you move to a square not explored by other explorers, you know are the first one to find this place.
+I believe there's a protocol that can accomplish this, but I wasn't able to come up with one for now. If there's a no solution for this problem, one can design a game around this mechanic.
 
-### Communication protocol
+For example, storywise, you could explain that you can see the footprints of other explorers on the ground. You cannot still see whose footprints they are, but you can see how many explorers have been there, this can be a tracing game mechanic, you can see how many explorers have been there and that might tell that other explorers are near. You can also use this as a way to trace other explorers, as you can see which rooms have been generated and which have not been, so by following the path of generated rooms, you eventually end up in a square with other explorer in them. Everytime you move to a square not explored by other explorers, you know are the first one to find this place.
 
-### which PSI protocol to use
-- the PSI protcol needs to work in a such way that explorers cannot cheat, or if they can cheat, that is detectable and punishable
-- This can be achieved by using most of the PSI protcols, and then applying a ZK proof that it was computed correctly.
-
-When one explorer moves, the other explorers need to communicate:
-1) 
-explorer state:
-```
-current_position = (0,1)
-move_history = [(0,0), (0,1), (0,2), (0,1)]
-squares_visited_with_seeds = [(0,0, 0x..), (0,1, 0x...), (0,2, 0x...)]
-doors_open = [
-    (0,0, [0,0,1,1])
-    (0,1, [0,1,0,0])
-    (0,2, [1,0,0,1])
-]
-```
-
-
-## explanding the world
+## Explanding the world and rules
+There's futher ideas on how you 
 The world does not need to be limited to be just rooms 
 
-
-- x,y grid, with doors to 1-4 directions with tile info
-- discoverable world
-- root hash
-- private world discovery
-- locality-dependant discovery
-- onchain world discovery
-- witness encryption
-![image](https://hackmd.io/_uploads/r1qOU0NzJx.png)
-
-
-
-
 https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s
-https://0xparc.org/blog/zk-hunt
-
-
-- private set intersection
 
 # challenges & notes
 - all the explorers need to communicate with each other regularly, making the protocol $o(n^2)$ at best
