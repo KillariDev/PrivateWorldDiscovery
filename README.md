@@ -1,77 +1,99 @@
 # Private world discovery
-When the real world is being explored, the information about the new findings are only first known by the explorer themselves. This information is only shared to the other people if they also explore the same thing, or the people who have been there share this information with it.
+When exploring the real world, new discoveries are initially known only to the person who finds them. These findings are shared with others only if they independently discover the same thing or if the original explorer chooses to reveal the information.
 
-A blockchain is a public ledger. A game built on blockchain is inheritely public, all the information shared is shared with everyone. Cryptography allows us to hide information on public ledger. Cryptography allows us to build a virtual world that exists on public ledger, that is consitent between the users, but is not known by ANYONE except for those who explore it or hear about it from explorers.
+In contrast, a blockchain operates as a public ledger, where all information is inherently transparent and accessible to everyone. While this transparency is advantageous for trust and security, it conflicts with the concept of a private, explorable world. However, cryptography allows us to address this challenge by hiding information even on a public ledger. With cryptographic techniques, we can create a virtual world that remains consistent for all users but is only revealed to those who explore it or receive shared knowledge from other explorers.
 
-## The World
-Let's construct our world as a 2d square grid of rooms. The grid contains rooms that have doors to various directions:
+## Designing the World
+Imagine a 2D grid of rooms forming the foundation of our world. Each room may have doors connecting it to adjacent rooms in the four cardinal directions:
 ![image](https://hackmd.io/_uploads/S139iJHz1g.png)
 
-The explorers in our world control a single character that can move between the rooms by using doors between them.
+Explorers navigate this world by moving a character through these rooms, entering new areas through doors. Initially, the world is completely unknown — no one knows which rooms are connected or even if all rooms are accessible. Importantly, the rooms are not pre-generated; instead, they come into existence only when an explorer discovers them. This ensures that no individual can design or pre-know the structure of the world, paralleling the way the real world lacks a single "builder" who knows everything about it.
 
-Initially the rooms are known by anyone; we don't know which rooms lead to which rooms or even if all the rooms are accessible. These rooms are not generated at the start to keep them hidden from anyone. There's no world builder on this world, no person that could have built the world as that would make them knowledgeable about the world. The world we live in, also does not have a single person who could have designed it for others to explore.
+## The Process of Exploration
 
-Let's imagine two explorers that have entered the world and explored their first rooms:
+Let’s consider two explorers who have just entered the world:
 ![image](https://hackmd.io/_uploads/B1T4MeBGkg.png)
 Either of our explorers know what are in their own rooms, but they or nobody else knows about what is in the other rooms.
 
-Now, the green explorer decides to enter the door and enter a new unexplored room. As the explorer enters the room, it's generated
+Each explorer knows only the details of the room they occupy. Beyond their current location, neither they nor anyone else knows what lies in the adjacent rooms.
+
+Now, suppose the green explorer ventures into an adjacent unexplored room. As they enter, the new room is generated dynamically:
 ![image](https://hackmd.io/_uploads/S1dLflHzJl.png)
 
-### Generating a new room
-To generate room, we randomize the four doors of the room. The doors can be closed or open. In the image above, the random generator has generated only one door up. We also know that there's a door towards the direction we came from (left).
+### Room Generation Mechanics
+When a new room is generated, its features — such as which doors are open or closed—are determined randomly. For instance, in the image above, the random process created a room with one open door leading upwards, while the door to the left corresponds to the explorer's entry point.
 
-To generate room we need to have an access to random oracle that gives us a random number. There's many options on what the oracle could be, but that is not important, let's just imagine we have an access to an oracle that provides us with a random number and we can trust it to be a number that was not known by anyone prior we get it. This number can be public for everyone.
+To generate room we need to have an access to random oracle that gives us a random number. There's many options on how this oracle could be implemented, but that is not important, let's just imagine we have an access to an oracle that provides us with a random number and we can trust the number to be a number that was not known by anyone prior we get it. This number should be public for everyone.
 
-Now, as this random number is public for everyone, we cannot use it directly to generate the room, but we need to modify it in a way that the random number we use to generate the room is only known by the initial explorer. This can be achieved simply by hashing it with users private key:
-
+1) Room Seed Generation
+The explorer hashes the public random number with their private key to produce a room seed which is only known by the explorer:
 ```
 room_seed[x,y] = hash(publicRandom, privateKey)
 ```
 
-This seed is then used to calculate on which directions this room has doors for. We also need to mark this room as being generated (green in the image). This means no explorer will generate this room again. The explorer commits the hash of the seed to chain, in order not to be able to change it:
+2) Room Hash Commitment
+The room seed is used to calculate the room's layout (e.g., door positions). To prevent tampering, the explorer commits the hash of this seed to the blockchain along with the public random number that was used:
 ```
 room_hash[x,y] = hash(room_seed[x,y])
+room_random_number[x,y] = publicRandom
 ```
 
-One interesting fault scenario here is that the explorer can manipulate the results here by refusing to calculate this if the result is not preferrable for them. To combat this attack vector, the explorer of the world need to be punished by some means (eg, by killing their character, or slashing their monetary stake). The fault here is provable, so it's easy to punish the explorer trustlessly.
+This cryptographic process ensures that the explorer cannot retroactively alter the room's properties. If an explorer attempts to manipulate results — such as by discarding undesirable outcomes — this misbehavior can be detected and punished (e.g., by killing their character or slashing their stake). Since the fault is provable, penalties can be enforced in a trustless manner.
 
-### Generating a room next to an already generated room
-Now it's the red explorers turn to move. The red explorer moves left next to the green explorer:
+### Generating a Room Next to an Already Generated Room
+
+#### Problem: Room Dependencies
+When the red explorer moves left next to the green explorer, they must generate a new room. However, this new room depends on the state of the already-generated room below. For example, if the lower room has an upward door, the new room must have a downward door.
+
 ![image](https://hackmd.io/_uploads/rJmPNerGyx.png)
-The red explorer generates the room the same way as before, but we now face a challenge; The room below is generated, which has an impact on the room being generated above, as if the room below has a door upwards, the room above also has to have door downwards. As a red explorer, we do not know what exists in the room below, we just know it has been generated, as that is public information.
 
-The state of the doors about the room below is only known by the green explorer, so in order to generate the new room, we need to request this information from them. The red only needs and should get to know if there's a door between the rooms, nothing more. In order to exchange this information between the explorers, green needs to communicate red the variable $hasDoorUpwards[x,y]$ that tells if there's a door between the rooms, and a respective zero knowledge proof that proves from the public input $roomHash[x,y]$ that:
+While the red explorer knows the room below exists (public information), they lack details about its door configuration. This information is private to the green explorer.
+
+#### Solution: Sharing Information with Zero-Knowledge Proofs
+The red explorer requests the specific information about whether a door exists between the rooms. The green explorer communicates the variable $hasDoorUpwards[x, y]$, which indicates if there's a door upwards in the room below, along with a zero-knowledge proof (ZKP) that ensures the information is valid. The ZKP must prove that:
+
 ```circuit
 roomHash[x,y] = hash(roomSeed[x,y]) and
 hasDoorUpwards(roomSeed[x,y]) = has_door_upwards[x,y]
 ```
-The green explorer shares this information onchain encrypted with red explorers public key (to prevent anyone else knowing the information). Sharing this information could happen outside chain in the happy case. However, if green explorer refuses to share the information the red explorer needs to able to slash green explorer on the bad behaviour.
 
-An another attack vector here is to publish garbage information. If the red explorer cannot decrypt the information, they can generate a proof that when the message is decrypted, it does not result into information about the door and proof about it:
+To preserve privacy, the green explorer encrypts the information using the red explorer's public key and shares it publicly on chain. While off-chain sharing suffices in the ideal case, an on-chain mechanism is necessary to handle disputes.
+
+#### Handling Misbehavior
+1) **Refusal to Share**: If the green explorer refuses to share the required information, the red explorer can slash the green explorer for bad behavior using the on-chain protocol.
+
+2) **Providing Invalid Information**: If the red explorer cannot decrypt the shared data or if the decrypted message does not include valid information about the room's doors, they can provide a proof of failure:
 ```circuit
 decrypt(message) != (room_hash[x,y], proof)
 ```
 
 The red explorer can then generate the room as before and set door between the rooms open using the green explorers information.
 
-#### Two additional edge cases
-There's also two other scenarios that can happen when an explorer moves to a room:
-1) The room can already be fully generated, so we need to get the whole room generating seed. This is easy as the other explorer can just share `room_seed[x,y]` directly, this will also allow the new explorer the power to generate new proofs from this location to the other explorers.
-2) More than one nearby rooms can be already generated, in this situation we need to request information from explorers that have visited the nearby rooms using the same protocol.
+#### Edge Cases
+1) **Fully Generated Rooms**: If the room is already generated, the red explorer requests the full $roomSeed[x, y]$. This enables them to validate the room and generate proofs for other explorers if needed.
+2) **Multiple Nearby Rooms**: When multiple neighboring rooms are already generated, the red explorer must query the respective explorers using the same protocol to gather all required information.
 
 ## Hidden movement
-Our current world leaks information about the other explorers. Everyone know at all times where the other explorers are. This is not how real explorable world works.
+Currently, explorers' locations are fully visible, which is unrealistic. A new protocol is required to enable private movement while maintaining the ability to share world information appropriately.
 
-We need to do a big overhaul on the protocol to be able to hide the explorers from each other, while at the same time have the exploring mechanics. We need a way for exploers to move privately in the world and then a way for players to share appropriate information about the world when needed. There's a blog post [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt) that explains nicely on how you can make a game with private movement, so we do not go in detail on how that can be accomplished. However, we'll explain more in detail on how to accomplish the hidden world. 
 
-Flynn discusses a hidden world idea in their blogpost, but the proposed world requires a world creator, a trusted party that creates the world and shares it with the other users. We want to have a world that is not known by anyone, and only known by explorers and those they like to share this information with.
 
-As the explorers are now moving in the world in a hidden manner, when a new room is being explored, we have no information if this room exists already, or which explorer might know some information abut it. In order to acquire this information, we need a way to query the other explorers on if they have been in that room or nearby it. The other explorers then need to be able to reply this query and prove that their information about it is correct, while at the same not leak any additional information.
+We need a significant overhaul of the protocol to enable private movement for explorers while preserving the mechanics of world exploration. Explorers must be able to navigate the world without revealing their positions and share relevant information about the world only when necessary.
 
-An interesting challenge arises from this, the explorer need to query information about their room, without telling the other explorers on what the room is in question. The other exploers also need to reply to this, without leaking anything extra.
+A blog post, [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt), provides an excellent explanation of private movement in games. While we won’t delve into those details, we will focus on implementing a hidden world.
 
-We have to come up with completely different way to tackle this situation and we cannot really use any other logic discussed previously.
+Flynn’s concept involves a trusted **world creator** who designs the world and shares it with players. However, we aim for a decentralized approach where the world is unknown to everyone except the explorers and those they choose to share information with.
+
+When explorers move through the hidden world, a challenge arises when encountering new rooms. Explorers need to determine:
+
+1) Whether a room already exists.
+2) Which other explorers, if any, possess information about that room or its surroundings.
+
+To achieve this:
+
+1) **Query Mechanism**: Explorers must query others about a room's status without revealing the room in question.
+2) **Selective Responses**: Responding explorers must provide accurate information about the queried room without disclosing details about other rooms.
+This protocol must ensure privacy for both the querying and responding explorers, requiring a fundamentally different approach from existing methods.
 
 Problem description:
 > - We have an user A that wants to know information about one specific room
@@ -80,10 +102,15 @@ Problem description:
 > - The user group B only want to share information about the one particular unknown room, and nothing about the others
 
 ### Private Set Intersection
-Our problem description fits a known problem: [Private Set Intersection (PSI)](https://en.wikipedia.org/wiki/Private_set_intersection).
-PSI allows two users to compare two sets of data with each other and share the outcome only between either of the explorers, eg. explorer 1 could query information about room A: $set_1 = [A]$. The explorer 2 knows information about rooms: $set_2 = [A, C,D,E]$. The explorers can conduct a private set intersection to be able to make explorer 1 know about the room A, without telling the explorer 2 which room they queried for.
+The challenge described aligns with a well-known problem: [Private Set Intersection (PSI)](https://en.wikipedia.org/wiki/Private_set_intersection).
+PSI enables two parties to compare their data sets and determine their intersection while revealing nothing beyond the result.
 
-There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game. The game by [kilyig](https://github.com/kilyig) implements cryptographical Fog of War (FoW) with DH-PSI protocol. Kilyig also impements zero knowledge circuits for he DH-PSI protocol that are needed to ensure that the participants are cannot lie. DH-PSI works without them as well, but then the users need to be assumed to be honest.
+For instance:
+1) Explorer 1 wants information about Room A, represented as $𝑠𝑒𝑡_1=[𝐴]$
+2) Explorer 2 knows about multiple rooms, represented as $𝑠𝑒𝑡_2=[𝐴,𝐶,𝐷,𝐸]$
+3) Using PSI, Explorer 1 can learn that Room A is in Explorer 2's set, without disclosing to Explorer 2 which room was queried.
+
+There's multiple protocols than can achieve PSI, I believe the simplest such protocol is [Diffie-Hellman based PSI](https://blog.openmined.org/private-set-intersection-with-diffie-hellman/). Diffie-Hellman based PSI can be found implemented in [ZheroTag](https://github.com/kilyig/ZheroTag/tree/main) game by [kilyig](https://github.com/kilyig). The game implements cryptographical Fog of War (FoW) with DH-PSI protocol. Kilyig also impements zero knowledge circuits for he DH-PSI protocol that are needed to ensure that the participants are cannot lie. DH-PSI works without them as well, but then the users need to be assumed to be honest.
 
 Our problem is very similar to the Fog of War problem, but not exactly the same, as in our world the world itself is under the Fog of War, not only the players. 
 
@@ -143,8 +170,10 @@ For example, storywise, you could explain that you can see the footprints of oth
 - The world does not need to be limited to just rooms, we could have a hiearchical structure over the rooms in lower resolution. For example we could have biomes that consits of 4 rooms at once and we run a separate PSI protocol for the biome information. The biomes would then affect the generated rooms 
 - The explorers door history list continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the dungeon to also change when nobody remembers about it.
 
-# challenges & notes
-- all the explorers need to communicate with each other regularly, making the protocol $o(n^2)$ at best
-- The room history lists of the explorer continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the dungeon to also change when nobody remembers about it.
+## Challenges
+- all the explorers need to communicate with each other regularly, its not possible to only communicate with blockchain. The PSI requires multiple rounds to communicate as well
+- The amount of data communicated with users is also significant, PSI is not particularly efficient protocol.
+- Making a world that would allow anyone to join at any time and explore as they like is not also really practical. All the explorers need to be online at the same time and be ready to communicate when other explorers make actions 
+- The room history lists of the explorers continue to grow all the time as the game progresses. One way to reduce this is make the explorers forget the information over time, making the world also change when it's being forgotten
 
 Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
