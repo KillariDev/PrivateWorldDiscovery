@@ -1,7 +1,6 @@
 # Creating Private, Discoverable Worlds in Public Spaces using Zero Knowledge Cryptography
 
-<img src = "hiddenworlds.jpg" width = "400">
-<img src = "ph.jpeg" width = "400">
+<img src = "hiddenworlds.jpg" width = "600">
 
 When exploring the real world, new discoveries are initially known only to the person who finds them. These findings are shared with others only if they independently discover the same thing or if the original explorer chooses to reveal the information.
 
@@ -242,6 +241,7 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 
 
 ## 5) Explanding the World and Rules
+<img src = "map.jpg" width = "400">
 1) **Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
 
 2) **Enhanced Room Features**: The world can extend beyond just doors. Additional variables could represent unique room features or items. However, the PSI protocol is already computationally intensive, and adding more variables would further increase its complexity.
@@ -259,6 +259,6 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 
 4) **Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
 
-<img src = "map.jpg" width = "600">
+<img src = "ph.jpeg" width = "400">
 
 Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
