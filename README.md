@@ -113,6 +113,7 @@ Problem description:
 > - The user group B only want to share information about the one particular unknown room, and nothing about the others
 
 ### Private Set Intersection
+<img src = "psi.png" width = "300">
 The challenge described aligns with a well-known problem: [Private Set Intersection (PSI)](https://en.wikipedia.org/wiki/Private_set_intersection).
 PSI enables two parties to compare their data sets and determine their intersection while revealing nothing beyond the result.
 
