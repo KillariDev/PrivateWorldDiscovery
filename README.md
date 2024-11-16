@@ -24,24 +24,27 @@ Let’s consider two explorers who have just entered the world:
 
 ![image2](image2.png)
 
-Each explorer is only aware of the details of the room they are currently in. They know the directions of the doors within their room, but they have no knowledge of what lies in adjacent rooms—whether those rooms belong to other explorers or are uncharted. Similarly, other explorers or outside observers cannot see any rooms.
+Each explorer is only aware of the details of the room they are currently in. They know the directions of the doors within their room, but they have no knowledge of what lies in adjacent rooms — whether those rooms belong to other explorers or are uncharted. Similarly, other explorers or outside observers cannot see any rooms.
+
+### Room Generation Mechanics
 
 Now, imagine the green explorer decides to venture into an adjacent, unexplored room. As they enter, the new room is dynamically generated:
 
 ![image3](image3.png)
 
-### Room Generation Mechanics
 When a new room is generated, its features — such as which doors are open or closed—are determined randomly. For instance, in the image above, the random process created a room with one open door leading upwards, while the door to the left corresponds to the explorer's entry point.
 
 To generate room we need to have an access to random oracle that gives us a random number. There's many options on how this oracle could be implemented, but that is not important, let's just imagine we have an access to an oracle that provides us with a random number and we can trust the number to be a number that was not known by anyone prior we get it. This number should be public for everyone.
 
-1) Room Seed Generation
+1) **Room Seed Generation**
+
 The explorer hashes the public random number with their private key to produce a room seed which is only known by the explorer:
 ```
 room_seed[x,y] = hash(publicRandom, privateKey)
 ```
 
-2) Room Hash Commitment
+2) **Room Hash Commitment**
+
 The room seed is used to calculate the room's layout (e.g., door positions). To prevent tampering, the explorer commits the hash of this seed to the blockchain along with the public random number that was used:
 ```
 room_hash[x,y] = hash(room_seed[x,y])
