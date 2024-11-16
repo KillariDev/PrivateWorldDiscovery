@@ -1,29 +1,43 @@
 # Private world discovery
-Think of a world that exists in a 2d square grid. The grid contains rooms that have doors to various directions:
+When the real world is being explored, the information about the new findings are only first known by the explorer themselves. This information is only shared to the other people if they also explore the same thing, or the people who have been there share this information with it.
+
+A blockchain is a public ledger. A game built on blockchain is inheritely public, all the information shared is shared with everyone. Cryptography allows us to hide information on public ledger. Cryptography allows us to build a virtual world that exists on public ledger, that is consitent between the users, but is not known by ANYONE except for those who explore it or hear about it from explorers.
+
+## The World
+Let's construct our world as a 2d square grid of rooms. The grid contains rooms that have doors to various directions:
 ![image](https://hackmd.io/_uploads/S139iJHz1g.png)
 
-The players control a single character that can move to nearby room via a door once per turn. The players take turns in this example
+The explorers in our world control a single character that can move between the rooms by using doors between them.
 
-## Starting situation
-All of the rooms start as non-generated rooms (we don't know if they have open doors to which directions) except each players starting room:
+Initially the rooms are known by anyone; we don't know which rooms lead to which rooms or even if all the rooms are accessible. These rooms are not generated at the start to keep them hidden from anyone. There's no world builder on this world, no person that could have built the world as that would make them knowledgeable about the world. The world we live in, also does not have a single person who could have designed it for others to explore.
+
+Let's imagine two explorers that have entered the world and explored their first rooms:
 ![image](https://hackmd.io/_uploads/B1T4MeBGkg.png)
+Either of our explorers know what are in their own rooms, but they or nobody else knows about what is in the other rooms.
 
-The next turn the player moves to a square and the room gets generated: 
+Now, the green explorer decides to enter the door and enter a new unexplored room. As the explorer enters the room, it's generated
 ![image](https://hackmd.io/_uploads/S1dLflHzJl.png)
 
 ## Generating a new room
+To generate room, we randomize the four doors of the room. The doors can be closed or open. In the image above, the random generator has generated only one door up. We also know that there's a door towards the direction we came from (left).
 
-To generate room, we randomize which doors are open. In this situation the randomization picks only door open towards up direction, and we also know that there's a door towards the direction we came from (left). To generate room we need to have an access to random oracle. We can use `block hash` for this purpose, let's assume it's safe enough. Also we want to generate the room in a manner that not other players know what doors are generated. For this purpose we need some secret number that no other players have access. One such number is players private key. So we can get the hidden seed of the room as:
+To generate room we need to have an access to random oracle that gives us a random number. There's many options on what the oracle could be, but that is not important, let's just imagine we have an access to an oracle that provides us with a random number and we can trust it to be a number that was not known by anyone prior we get it. This number can be public for everyone.
+
+Now, as this random number is public for everyone, we cannot use it directly to generate the room, but we need to modify it in a way that the random number we use to generate the room is only known by the initial explorer. This can be achieved simply by hashing it with users private key:
+
 ```
-room_x_y_seed = sign(privatekey, x, y)
+room_x_y_seed = hash(publicRandom, privateKey)
 ```
-This seed is then used to calculate on which directions this room as doors for. This room also need to be marked as generated (green in the image). This means no players will generate this room again. The player commits the hash of the seed to chain, in order not to be able to change it:
+
+This seed is then used to calculate on which directions this room has doors for. We also need to mark this room as being generated (green in the image). This means no player will generate this room again. The player commits the hash of the seed to chain, in order not to be able to change it:
 ```
 room_hash_x_y = hash(room_x_y_seed)
 ```
 
+One interesting fault scenario here is that the explorer can manipulate the results here by refusing to calculate this if the result is not preferrable for them. To combat this attack vector, the explorer of the world need to be punished by some means (eg, by killing their character, or slashing their monetary stake). The fault here is provable, so it's easy to punish the explorer trustlessly.
+
 ## Generating a room next to an already generated room
-Now it's the red players turn. The red player moves left next to the green player:
+Now it's the red explorers turn to move. The red player moves left next to the green player:
 ![image](https://hackmd.io/_uploads/rJmPNerGyx.png)
 The red player generates the room the same way as before, but we now face a challenge; The room below is generated, which has an impact on the room generated above, as if the room below has a door upwards, the room above also has to have door upwards. As a red player, we do not know what exists in the room below, we just know it has been generated.
 
@@ -129,8 +143,11 @@ https://0xparc.org/blog/zk-hunt
 
 - private set intersection
 
-# challenges
+# challenges & notes
 - all the players need to communicate with each other regularly, making the protocol $o(n^2)$ at best
 - The room history lists of the player continue to grow all the time as the game progresses. One way to reduce this is make the players forget the information over time, making the dungeon to also change when nobody remembers about it.
 - Players can refuse to share information and there needs to be some kind of method to punish players for behaving badly, and a way to recover from these situations. One such way is that the player refusing to cooperate will just get killed and they lose the character, after this they are booted of the game.
 - Can we make it so that you don't know who has been in the location before?
+- one world builder that knows the world
+
+
