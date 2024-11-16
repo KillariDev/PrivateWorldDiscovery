@@ -9,8 +9,6 @@ In contrast, a blockchain operates as a public ledger, where all information is 
 ## Summary
 This article explores how a private world can be created within a public space using blockchain and cryptographic techniques. The world remains hidden to **everyone** except those actively exploring it. Explorers navigate a dynamically generated 2D grid of rooms, where each room’s details are only revealed when discovered. Cryptographic commitments and Zero-Knowledge Proofs (ZKPs) ensure privacy, and explorers can query each other for information using Private Set Intersection (PSI), without exposing which rooms are being asked about. 
 
-![map](map.jpg)
-
 ## Designing the World
 Imagine a 2D grid of rooms forming the foundation of our world. Each room may have doors connecting it to adjacent rooms in the four cardinal directions:
 
@@ -252,5 +250,7 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 **Simultaneous Participation**: Creating a world where anyone can join and explore at any time is impractical. All explorers must be online simultaneously and ready to respond when others take actions, limiting flexibility.
 
 **Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
+
+![map](map.jpg)
 
 Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
