@@ -6,17 +6,17 @@ When exploring the real world, new discoveries are initially known only to the p
 
 In contrast, a blockchain operates as a public ledger, where all information is inherently transparent and accessible to everyone. While this transparency is advantageous for trust and security, it conflicts with the concept of a private, explorable world. However, cryptography allows us to address this challenge by hiding information even on a public ledger. With cryptographic techniques, we can create a virtual world that remains consistent for all users but is only revealed to those who explore it or receive shared knowledge from other explorers.
 
-## Summary
+## 1) Summary
 This article explores how a private world can be created within a public space using blockchain and cryptographic techniques. The world remains hidden to **everyone** except those actively exploring it. Explorers navigate a dynamically generated 2D grid of rooms, where each room’s details are only revealed when discovered. Cryptographic commitments and Zero-Knowledge Proofs (ZKPs) ensure privacy, and explorers can query each other for information using Private Set Intersection (PSI), without exposing which rooms are being asked about. 
 
-## Designing the World
+## 2) Designing the World
 Imagine a 2D grid of rooms forming the foundation of our world. Each room may have doors connecting it to adjacent rooms in the four cardinal directions:
 
 ![image1](image1.png)
 
 Explorers navigate this world by moving a character through these rooms, entering new areas through doors. Initially, the world is completely unknown — no one knows which rooms are connected or even if all rooms are accessible. Importantly, the rooms are not pre-generated; instead, they come into existence only when an explorer discovers them. This ensures that no individual can design or pre-know the structure of the world, paralleling the way the real world lacks a single "builder" who knows everything about it.
 
-## The Process of Exploration
+## 3) The Process of Exploration
 
 Let’s consider two explorers who have just entered the world:
 
@@ -83,10 +83,8 @@ The red explorer can then generate the room as before and set door between the r
 1) **Fully Generated Rooms**: If the room is already generated, the red explorer requests the full $roomSeed[x, y]$. This enables them to validate the room and generate proofs for other explorers if needed.
 2) **Multiple Nearby Rooms**: When multiple neighboring rooms are already generated, the red explorer must query the respective explorers using the same protocol to gather all required information.
 
-## Hidden movement
+## 4) Hidden movement
 Currently, explorers' locations are fully visible, which is unrealistic. A new protocol is required to enable private movement while maintaining the ability to share world information appropriately.
-
-
 
 We need a significant overhaul of the protocol to enable private movement for explorers while preserving the mechanics of world exploration. Explorers must be able to navigate the world without revealing their positions and share relevant information about the world only when necessary.
 
@@ -233,23 +231,23 @@ I believe there's a protocol that can accomplish this, but I wasn't able to come
 #### Game Design Implications
 If it is impossible to create such a protocol, the mechanic can still be integrated into the game design. For instance, footprints or residual traces could indicate the presence of other explorers without revealing their identities. This feature could enhance the narrative while introducing strategic gameplay elements, such as tracking others' movements or identifying unexplored areas.
 
-## Explanding the World and Rules
-**Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
+## 5) Explanding the World and Rules
+1) **Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
 
-**Enhanced Room Features**: The world can extend beyond just doors. Additional variables could represent unique room features or items. However, the PSI protocol is already computationally intensive, and adding more variables would further increase its complexity.
+2) **Enhanced Room Features**: The world can extend beyond just doors. Additional variables could represent unique room features or items. However, the PSI protocol is already computationally intensive, and adding more variables would further increase its complexity.
 
-**Hierarchical World Structure**: The world could include a hierarchical structure for broader exploration. For instance, biomes consisting of clusters of four rooms could be introduced. A separate PSI protocol could manage biome-level information, with biome attributes influencing the generation of individual rooms within them.
+3) **Hierarchical World Structure**: The world could include a hierarchical structure for broader exploration. For instance, biomes consisting of clusters of four rooms could be introduced. A separate PSI protocol could manage biome-level information, with biome attributes influencing the generation of individual rooms within them.
 
-**Dynamic Memory and World Evolution**: As the game progresses, explorers’ door histories grow continuously. To manage this, explorers could gradually forget old information, allowing the dungeon to evolve dynamically as forgotten areas change over time.
+4) **Dynamic Memory and World Evolution**: As the game progresses, explorers’ door histories grow continuously. To manage this, explorers could gradually forget old information, allowing the dungeon to evolve dynamically as forgotten areas change over time.
 
-## Challenges
-**Continuous Communication**: Explorers must communicate with each other regularly, as relying solely on blockchain is insufficient. Additionally, the PSI protocol requires multiple communication rounds, further increasing complexity.
+## 6) Challenges
+1) **Continuous Communication**: Explorers must communicate with each other regularly, as relying solely on blockchain is insufficient. Additionally, the PSI protocol requires multiple communication rounds, further increasing complexity.
 
-**Inefficiency of PSI**: PSI is not an efficient protocol, and the amount of data exchanged between users can be substantial, adding to resource demands.
+2) **Inefficiency of PSI**: PSI is not an efficient protocol, and the amount of data exchanged between users can be substantial, adding to resource demands.
 
-**Simultaneous Participation**: Creating a world where anyone can join and explore at any time is impractical. All explorers must be online simultaneously and ready to respond when others take actions, limiting flexibility.
+3) **Simultaneous Participation**: Creating a world where anyone can join and explore at any time is impractical. All explorers must be online simultaneously and ready to respond when others take actions, limiting flexibility.
 
-**Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
+4) **Growing Room History**: Explorers’ room history lists grow continuously as the game progresses. To manage this, explorers could gradually forget older information, allowing the world to evolve and change dynamically as forgotten areas are rediscovered.
 
 ![map](map.jpg)
 
