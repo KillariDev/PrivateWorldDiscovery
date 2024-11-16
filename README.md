@@ -1,6 +1,7 @@
 # Creating Private, Discoverable Worlds in Public Spaces using Zero Knowledge Cryptography
 
-<img src = "ph.jpeg" width = "600">
+<img src = "hiddenworlds.jpg" width = "400">
+<img src = "ph.jpeg" width = "400">
 
 When exploring the real world, new discoveries are initially known only to the person who finds them. These findings are shared with others only if they independently discover the same thing or if the original explorer chooses to reveal the information.
 
