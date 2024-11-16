@@ -91,7 +91,7 @@ Currently, explorers' locations are fully visible, which is unrealistic. A new p
 
 We need a significant overhaul of the protocol to enable private movement for explorers while preserving the mechanics of world exploration. Explorers must be able to navigate the world without revealing their positions and share relevant information about the world only when necessary.
 
-<img src = "https://imgur.com/LSVYcIB.png" width = "400">
+<img src = "https://imgur.com/LSVYcIB.png" width = "600">
 
 A blog post, [zk-hunt](https://0xparc.org/blog/zk-hunt) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt) offers a great explanation of private movement in games. We’ll be implementing a similar system in our own world. While we won’t go into the specifics of the implementation, our focus will be on creating a hidden world.
 
