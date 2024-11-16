@@ -47,7 +47,6 @@ decrypt(message) != (room_hash_x_y, proof)
 And again the misbehaving player can be punished provably.
 
 ## Two additional edge cases
-
 There's also two other scenarios that can happen when a player moves to a room:
 1) The room can already be fully generated, so we need to get the whole hash. This is easy as the other player can just share `room_x_y_seed` directly, this will also allow the new player the power to generate new proofs from this location to the other players
 2) More than one nearby rooms can be already generated, in this situation we need to request information from players that have visited the nearby rooms using the same protocol.
@@ -59,8 +58,31 @@ However, there's a way to accomplish this. When player explores a new room they 
 
 We have to come up with completely different way to tackle this situation and we cannot really use any other logic discussed previously.
 
-This can be accomplished with Private Set Intersection (PSI) protocols. PSI allows two users to compare two sets to each other and share the outcome only between either of the players. The sets users need to compare are not squares, but square door combinations: X, Y, door_up, door_right, door_down, door_left
+## Private Set Intersection
+This can be accomplished with Private Set Intersection (PSI) protocols. PSI allows two users to compare two sets to each other and share the outcome only between either of the players, eg. player 1 could have information set $[A,B,C,D]$ and the player 2 $[C,D,E]$, and 
 
+## Pathway data structure
+The sets users need to compare are not only cordinates, but square+door combinations: $X$, $Y$, $doorUp$, $doorRight$, $doorDown$, $doorLeft$. Nearby rooms also share information between them, as if there's a room on right with a door on left, then the room on left must have door to the right. This means that you can uniquily represent a pathway with only variables: $X$, $Y$, $doorUp$, $doorRight$, no need to have variables $doorDown$, $doorLeft$ as these are stored in the nearby room already.
+
+## Applying PSI
+When one player makes a hidden move in a way that other players do not know where they are moving, the player need to ask information about the room from other players, without revealing to the other players on which room they are and what information they are asking.
+
+This can be accomplished by the moving player by creating a PSI query with the room they are in, and the other players need to reply to this with the information of all the rooms they know about. The PSI allows us to achieve this in a private manner, however, as the moving player is individually communicating with each player, the moving player will know which of the players have been in that location before, and who haven't. The player also knows if anyone has been in the room before as well. In the current protocol this is a mandatory information, as if nobody has been in the room or its neighbours, the player generates a completely new room for it.
+
+### hiding information on who has been in the location
+We can improve the mechanism by aggregating all the queries together, so that the player will no longer know where the data came from. When the moving player is querying for the information, all the other players need to communicate this information in a way, that its not revealed on who does the communication. This can be made using relay services, a player communicates their information to a relay service, and the relay service will then communicate this information to the querying player. The relay can be whoever, who can keep the secret on who communicated with them, but even this is not mandatory, as you could use a The Onion Router or similar protocol to communicate with relay. The PSI protocols also require back and fourth communication, so this communicating via relay needs to be done multiple times, which is not optimal.
+
+After the player gets all the information from all the players, the user will perform PSI protocol with them. The player will get the set of pathways that have been visited and if the doors to them are open or closed. The player will also know how many players have seen those doors, so our protocol is still leaking information.
+
+### Hiding information on number of players that have been in the location
+It's an interesting question that if it's possible to make it so that when players share information it would not actually be known if they have been in a location, but the room would be completely generated from the inputs of the other players. It would not matter if they have been in the room or not.
+
+The challenge here is that some people can know what the room should look like, while other players do not know. So somehow we need to figure out which of the players know the result of the room and who do not, while at the same not actually know if any one the players know this information.
+
+
+### which PSI protocol to use
+- the PSI protcol needs to work in a such way that players cannot cheat, or if they can cheat, that is detectable and punishable
+- This can be achieved by using most of the PSI protcols, and then applying a ZK proof that it was computed correctly.
 
 When one player moves, the other players need to communicate:
 1) 
@@ -99,3 +121,8 @@ https://0xparc.org/blog/zk-hunt
 
 - private set intersection
 
+# challenges
+- all the players need to communicate with each other regularly, making the protocol $o(n^2)$ at best
+- The room history lists of the player continue to grow all the time as the game progresses. One way to reduce this is make the players forget the information over time, making the dungeon to also change when nobody remembers about it.
+- Players can refuse to share information and there needs to be some kind of method to punish players for behaving badly, and a way to recover from these situations. One such way is that the player refusing to cooperate will just get killed and they lose the character, after this they are booted of the game.
+- Can we make it so that you don't know who has been in the location before?
