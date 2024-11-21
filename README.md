@@ -261,4 +261,4 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 
 <img src = "ph.jpeg" width = "400">
 
-Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt).
+Thanks for [Ronan](https://x.com/wighawag) for this hackathon idea. The writing is also inspired by [Autonomous World Discovery Devcon Bogota talk](https://www.youtube.com/watch?v=cWrSpTMpx4E&t=6027s) by [Flynn Calcutt](https://twitter.com/FlynnCalcutt). Thanks for [Ed](https://x.com/EAThomson) for pointing out that Fog of War is actually a solvable problem.
