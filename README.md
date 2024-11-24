@@ -242,6 +242,7 @@ If it is impossible to create such a protocol, the mechanic can still be integra
 
 ## 5) Explanding the World and Rules
 <img src = "map.jpg" width = "400">
+
 1) **Player Visibility**: Currently, players cannot see each other. This can be easily changed by including character location data in their communications. Location sharing would follow the same mechanism as door-sharing within the protocol.
 
 2) **Enhanced Room Features**: The world can extend beyond just doors. Additional variables could represent unique room features or items. However, the PSI protocol is already computationally intensive, and adding more variables would further increase its complexity.
